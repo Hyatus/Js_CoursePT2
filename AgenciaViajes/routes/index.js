@@ -8,18 +8,29 @@ router.get("/", (req, res) => {
   // res.json({
   //     id:1
   // });
-  res.render('inicio');
+  res.render('inicio',{
+    pagina:'Inicio'
+  });
   
 });
 
 router.get("/nosotros", (req, res) => {
-
-  const viajes = 'Viaje a alemania';
-
   res.render('nosotros',{
-    viajes
+    pagina:'Nosotros'
   });
 
+});
+
+router.get("/viajes", (req, res) => {
+  res.render('viajes',{
+    pagina:'Viajes'
+  });
+});
+
+router.get("/testimoniales", (req, res) => {
+  res.render('testimoniales',{
+    pagina:'Testimoniales'
+  });
 });
 
 
