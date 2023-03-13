@@ -3,164 +3,148 @@ import Veterinario from "../models/Veterinario.js";
 
 import generarId from "../helpers/generarId.js";
 
-const registrar = async(req, res) => {
-    const {email} = req.body;
+const registrar = async (req, res) => {
+  const { email } = req.body;
 
-    // Revisar si un usuario ya está registrado 
+  // Revisar si un usuario ya está registrado
 
-    const existeUsuario = await Veterinario.findOne({email});
+  const existeUsuario = await Veterinario.findOne({ email });
 
-    if(existeUsuario){
-        const error = new Error('Usuario ya registrado');
-        return res.status(400).json({msg: error.message});
-    }
+  if (existeUsuario) {
+    const error = new Error("Usuario ya registrado");
+    return res.status(400).json({ msg: error.message });
+  }
 
-    try{
-        // Guardar un nuevo veterinario 
-        const veterinario = new Veterinario(req.body);
-        // Bloqueamos porque no sabemos cuánto tiempo tomará en guardar
-        // el registro 
-        const veterinarioGuardado = await veterinario.save();
-        
-        res.json(veterinarioGuardado);
-    }catch(error){
-        console.log(error)
+  try {
+    // Guardar un nuevo veterinario
+    const veterinario = new Veterinario(req.body);
+    // Bloqueamos porque no sabemos cuánto tiempo tomará en guardar
+    // el registro
+    const veterinarioGuardado = await veterinario.save();
 
-    }
+    res.json(veterinarioGuardado);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const perfil = (req, res) => {
+  const { veterinario } = req;
 
-    const { veterinario } = req;
-
-    res.json({perfil: veterinario});
-
+  res.json({ perfil: veterinario });
 };
 
+const confirmar = async (req, res) => {
+  const { token } = req.params;
+  const usuarioConfirmar = await Veterinario.findOne({ token });
 
-const confirmar = async(req,res) => {
-    const {token} = req.params;
-    const usuarioConfirmar = await Veterinario.findOne({token});
+  if (!usuarioConfirmar) {
+    const error = new Error("Usuario no es válido");
+    return res.status(400).json({ msg: error.message });
+  }
 
-    if(!usuarioConfirmar){
-        const error = new Error('Usuario no es válido');
-        return res.status(400).json({msg: error.message});
-    }
+  try {
+    usuarioConfirmar.token = null;
+    usuarioConfirmar.confirmado = true;
+    await usuarioConfirmar.save();
 
-    try{
-        usuarioConfirmar.token = null;
-        usuarioConfirmar.confirmado = true;
-        await usuarioConfirmar.save();
+    res.json({ msg: "Confirmando cuenta..." });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-        res.json({msg: 'Confirmando cuenta...'});
-    }catch(error){
-        console.log(error);
-    }
+const autenticar = async (req, res) => {
+  const { email, password } = req.body;
 
-}
+  // comprobar si el usuario existe
+  const usuarioExiste = await Veterinario.findOne({ email });
 
+  if (!usuarioExiste) {
+    const error = new Error("El usuario no existe");
+    return res.status(403).json({ msg: error.message });
+  }
 
-const autenticar = async (req,res) =>{
+  // Comprobar si el usuario está confirmado o no
+  if (!usuarioExiste.confirmado) {
+    const error = new Error("Tu cuenta no ha sido confirmada");
+    return res.status(403).json({ msg: error.message });
+  }
 
-    const {email, password} = req.body;
+  // Autenticar al usuario  -> Revisar Password
+  if (await usuarioExiste.comprobarPassword(password)) {
+    // Autenticar
+    res.json({ token: generarJWT(usuarioExiste.id) });
+    console.log("password correcto!");
+  } else {
+    const error = new Error("Password incorrecto");
+    return res.status(403).json({ msg: error.message });
+  }
+};
 
-    // comprobar si el usuario existe 
-    const usuarioExiste = await Veterinario.findOne({email});
+const olvidePassword = async (req, res) => {
+  const { email } = req.body;
 
-    if(!usuarioExiste){
-        const error = new Error("El usuario no existe");
-        return res.status(403).json({msg: error.message});
-    }
-    
-    // Comprobar si el usuario está confirmado o no
-    if(!usuarioExiste.confirmado){
-        const error = new Error("Tu cuenta no ha sido confirmada");
-        return res.status(403).json({msg: error.message});
-    }
+  const existeVeterinario = await Veterinario.findOne({ email });
 
+  if (!existeVeterinario) {
+    const error = new Error("No existe este usuario");
+    return res.status(400).json({ msg: error.message });
+  }
 
-    // Autenticar al usuario  -> Revisar Password
-    if(await usuarioExiste.comprobarPassword(password)){
-        // Autenticar
-        res.json({token: generarJWT(usuarioExiste.id)});
-        console.log('password correcto!')
-    }else{
-        const error = new Error("Password incorrecto");
-        return res.status(403).json({msg: error.message});
-    }
-    
-}
+  try {
+    existeVeterinario.token = generarId();
 
-const olvidePassword = async (req,res) =>{
-    const {email} = req.body;
+    await existeVeterinario.save();
 
-    const existeVeterinario = await Veterinario.findOne({email});
+    res.json({ msg: "Hemos enviado un email con las instrucciones" });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-    if(!existeVeterinario){
-        const error = new Error('No existe este usuario');
-        return res.status(400).json({msg: error.message});
-    }
+const comprobarToken = async (req, res) => {
+  const { token } = req.params;
 
-    try {
-        existeVeterinario.token = generarId();
+  const tokenValido = await Veterinario.findOne({ token });
 
-        await existeVeterinario.save();
+  if (tokenValido) {
+    // EL TOKEN ES VALIDO EL USUARIO EXISTE
+    return res.status(200).json({ msg: "Token válido y el usuario existe" });
+  } else {
+    const error = new Error("El token es inválido");
+    return res.status(400).json({ msg: error.message });
+  }
+};
 
-        res.json({msg: 'Hemos enviado un email con las instrucciones'});
+const nuevoPassword = async (req, res) => {
+  const { token } = req.params;
 
-    } catch (error) {
-        console.log(error)
-    }
-}
- 
-const comprobarToken = async(req,res) =>{
-    const {token} = req.params;
+  const { password } = req.body;
 
-    const tokenValido = await Veterinario.findOne({token});
+  const veterinario = await Veterinario.findOne({ token });
 
-    if(tokenValido){
-        // EL TOKEN ES VALIDO EL USUARIO EXISTE 
-        return res.status(200).json({msg: 'Token válido y el usuario existe'});
+  if (!veterinario) {
+    const error = new Error("Hubo un error");
+    return res.status(400).json({ msg: error.message });
+  }
 
-    }else{
-        const error = new Error('El token es inválido');
-        return res.status(400).json({msg: error.message});
-    }
+  try {
+    veterinario.token = null;
+    veterinario.password = password;
+    await veterinario.save();
+    res.json({ msg: "Password actualizado con éxito! " });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-}
- 
-const nuevoPassword = async (req,res) =>{
-    const {token} = req.params;
-
-    const { password } = req.body;
-
-    const veterinario = await Veterinario.findOne({token});
-
-    if(!veterinario){
-        const error = new Error('Hubo un error');
-        return res.status(400).json({msg: error.message});
-    }
-
-    try {
-        veterinario.token = null;
-        veterinario.password = password;
-        await veterinario.save();
-        res.json({msg: 'Password actualizado con éxito! '});
-        
-    } catch (error) {
-        console.log(error);
-    }
-
-    
-
-}
- 
 export {
-    registrar,
-    perfil,
-    confirmar,
-    autenticar,
-    olvidePassword,
-    comprobarToken,
-    nuevoPassword
-}
+  registrar,
+  perfil,
+  confirmar,
+  autenticar,
+  olvidePassword,
+  comprobarToken,
+  nuevoPassword,
+};
