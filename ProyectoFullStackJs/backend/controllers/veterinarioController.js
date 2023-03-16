@@ -1,10 +1,10 @@
 import generarJWT from "../helpers/generarJWT.js";
 import Veterinario from "../models/Veterinario.js";
-
 import generarId from "../helpers/generarId.js";
+import emailRegistro from "../helpers/emailRegistro.js";
 
 const registrar = async (req, res) => {
-  const { email } = req.body;
+  const { email, nombre} = req.body;
 
   // Revisar si un usuario ya está registrado
 
@@ -21,6 +21,14 @@ const registrar = async (req, res) => {
     // Bloqueamos porque no sabemos cuánto tiempo tomará en guardar
     // el registro
     const veterinarioGuardado = await veterinario.save();
+
+
+    // Enviamos el Email
+    emailRegistro({
+      email,
+      nombre,
+      token: veterinarioGuardado.token
+    });
 
     res.json(veterinarioGuardado);
   } catch (error) {
