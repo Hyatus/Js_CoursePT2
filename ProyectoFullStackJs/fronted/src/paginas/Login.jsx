@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { useState } from 'react';
 import Alerta from '../components/alerta';
@@ -10,6 +10,11 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [alerta, setAlerta] = useState({});
+
+  const { setAuth } = useAuth();
+
+  // Con esto vamos a redireccionar al usuario
+  const navigate = useNavigate();
 
 
   const handleSubmit = async e =>{
@@ -32,6 +37,8 @@ const Login = () => {
 
       // Guardamos el token en el localStorage
       localStorage.setItem('token',data.token);
+      setAuth(data);
+      navigate('/admin');
     
     } catch (error) {
       setAlerta({
