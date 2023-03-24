@@ -23,7 +23,6 @@ const Header = () => {
                 >Cerrar Sesión</button>
             </nav>
         </div>
-
     </header>
   )
 }
