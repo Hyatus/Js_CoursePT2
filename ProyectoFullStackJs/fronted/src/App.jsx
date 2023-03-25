@@ -17,6 +17,8 @@ import { PacientesProvider } from './context/PacientesProvider';
 
 /* Paginas para las rutas protegidas */
 import AdministrarPacientes from './paginas/AdministrarPacientes';
+import EditarPerfil from './paginas/EditarPerfil';
+import CambiarPassword from './paginas/CambiarPassword';
 
 function App() {
 
@@ -36,6 +38,8 @@ function App() {
                 {/* Rutas protegidas  */}
                 <Route path='/admin' element={ <RutaProtegida /> }>
                       <Route index element={<AdministrarPacientes/>}/>
+                      <Route path='perfil' element={<EditarPerfil/>}/>
+                      <Route path='cambiar-password' element={<CambiarPassword/>}/>
                 </Route>
             </Routes> 
           </PacientesProvider>
