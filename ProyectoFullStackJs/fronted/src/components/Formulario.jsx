@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import usePacientes from "../hooks/usePacientes";
 import Alerta from "./alerta";
+
 
 const Formulario = () => {
 
@@ -9,12 +10,24 @@ const Formulario = () => {
   const [email, setEmail] = useState('');
   const [fecha, setFecha] = useState(Date.now());
   const [sintomas, setSintomas] = useState('');
+  const [id, setId] = useState(null);
 
   const [alerta, setAlerta ] = useState({});
 
-  const { guardarPaciente } = usePacientes();
+  const { guardarPaciente, paciente } = usePacientes();
+
+  useEffect(()=>{
+    if(paciente?._id){
+      setNombre(paciente.nombre);
+      setPropietario(paciente.propietario);
+      setEmail(paciente.email);
+      setFecha(paciente.fecha);
+      setSintomas(paciente.sintomas);
+      setId(paciente._id);
+    }
 
 
+  },[paciente]);
 
   const handleSubmit = e =>{
     e.preventDefault();
@@ -29,9 +42,17 @@ const Formulario = () => {
        return;
     }
 
-    setAlerta({});
-    guardarPaciente({nombre,propietario,email,fecha,sintomas});
-    
+    guardarPaciente({nombre,propietario,email,fecha,sintomas, id});
+    setAlerta({
+      msg:'Guardado correctamente'
+    });
+    setNombre('');
+    setEmail('');
+    setPropietario('');
+    setFecha('');
+    setSintomas('');
+    setId('');
+
   }
 
   const {msg} = alerta;
@@ -39,12 +60,13 @@ const Formulario = () => {
   return (
 
     <>
-        <p className="text-lg text-center mb-10 font-bold">
+
+        <h2 className="font-black text-3xl text-center">Agregar Pacientes </h2>
+        <p className="text-xl mt-5 mb-10 text-center font-bold">
           Añade a tus pacientes {''}
           <span className="text-indigo-600 font-bold">Y administralos</span>
         </p>
 
-         
 
         <form className=" bg-white py-10 px-5 mb-10 lg:mb-5 shadow-md rounded-md"
               onSubmit={handleSubmit}>
@@ -119,7 +141,7 @@ const Formulario = () => {
 
             <input 
               type="submit"
-              value="Agregar Paciente"
+              value={id ? "Modificar Paciente" : "Agregar Paciente"}
               className="bg-indigo-600 w-full p-3 text-white uppercase font-bold hover:bg-indigo-700 cursor-pointer transition-colors"
              />
         </form>
